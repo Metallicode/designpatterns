@@ -41,7 +41,7 @@ from itertools import cycle
 import time
 class SequencerController:
     def __init__(self):
-        self._sequence = cycle([])
+        self._sequence = cycle([tuple()])
         self._run = False
         self._speed = 120
         self._t = None
@@ -54,7 +54,8 @@ class SequencerController:
     def _loop(self):
         while self._run is True:
             if self._func is not None:
-                self._func(next(self._sequence), self._getTime())
+                step=next(self._sequence)
+                self._func(step[0],step[1])
                 time.sleep(self._getTime())
             
     def _getTime(self):    
@@ -76,12 +77,13 @@ class SequencerController:
 
 if __name__ == "__main__":
 
-    mc = MouseController(print)
-    mc.Start()
+##    mc = MouseController(print)
+##    mc.Start()
     
-##    sc = SequencerController(print)
-##    sc.SetLoop([234,567,87,355])
-##    sc.Run()
+    sc = SequencerController()
+    sc.SetLoop([(234,),(567,10),(87,5),(355,40)])
+    sc.DefineFunc(print)
+    sc.Run()
     
     
     

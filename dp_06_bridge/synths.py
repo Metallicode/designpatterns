@@ -102,7 +102,7 @@ class Sampler:
     def _repitch(self,sampIndex, val):
         newSampl = []
         for i in range(len(self._samps[sampIndex])):
-            if i % val == 0:
+            if i % (val *100)== 0:
                 continue
             else:
                 newSampl.append(self._samps[sampIndex][i])

@@ -63,7 +63,6 @@ class SamplerPlugin(Plugin):
         self._plugin = synths.Sampler()
 
     
-        
     def Play(self, pitch, length):
         self._plugin.play_sample(pitch, length)
 
