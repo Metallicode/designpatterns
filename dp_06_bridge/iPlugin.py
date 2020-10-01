@@ -43,11 +43,11 @@ class SH2020Plugin(Plugin):
     def __init__(self):
         self._plugin = synths.SH2020()
         self._detune = 0.001
-        self._oscCount = 3
+        self._oscCount = 5
     
         
-    def Play(self, pitch, length):pass
-        self._plugin.cloud_maker()
+    def Play(self, pitch, length):
+        self._plugin.cloud_maker(pitch,self._oscCount,self._detune, length)
 
     def Mod01(self, val):
         self._detune = val

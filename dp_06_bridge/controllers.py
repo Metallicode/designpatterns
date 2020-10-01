@@ -1,90 +1,87 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal as sgl
-import sounddevice as sd
+from pynput.mouse import Controller, Listener
+import threading
 
 
-#simple sine wave generator
-class Sine:
-    def __init__(self):
-        self._fs = 44100.0
-        self._freq = 440.0
+
+#concrete controller #01
+class MouseController:
+    def __init__(self, target):
+        self._screenX = 1360
+        self._screenY = 767
+        self._target = target
+        self._t = None
+
+    def SetTarget(self, t):
+        self._target = t
+
+    def SetScreen(self, x, y):
+        self._screenX = x
+        self._screenY = y
         
-    def setFreq(self, f):
-        self._freq = f
+    def _scaleToScreenSize(self, xMouse, yMouse):
+          fx = int(((xMouse * 100) / self._screenX) +50)
+          fy = (yMouse) / self._screenY          
+          return fx, fy
+
+    def _mouse_clicked(self, a,b,c,d):
+        if d is True:
+            self._target(*self._scaleToScreenSize(a,b))
+
+    def _listen(self):
+        with Listener(on_click=self._mouse_clicked) as listener:
+            listener.join()
+
+    def Start(self):
+        self._t = threading.Thread(target=self._listen, args=())
+        self._t.start()
+
+
+
+from itertools import cycle
+import time
+class SequencerController:
+    def __init__(self):
+        self._sequence = cycle([])
+        self._run = False
+        self._speed = 120
+        self._t = None
+        self._func = None
+
+    def DefineFunc(self, func):
+        self._func = func
         return self
-        
-    def play(self, length):
-        t = np.arange(self._fs*length) / self._fs
-        y = np.sin(2 * np.pi * self._freq * t)
-        sd.play(y , self._fs)
 
+    def _loop(self):
+        while self._run is True:
+            if self._func is not None:
+                self._func(next(self._sequence), self._getTime())
+                time.sleep(self._getTime())
+            
+    def _getTime(self):    
+        return 100/(60000 / self._speed)
+    
+    def Run(self):
+        self._run = True
+        self._t = threading.Thread(target=self._loop, args=())
+        self._t.start()
 
+    def SetLoop(self, values):
+        self._sequence = cycle(values)
 
-#fm synth
-class FM6:
-    def __init__(self):
-        self._fs = 44100.0
-
-    def _norm(self,data):
-        min_v = min(data)
-        max_v = max(data)
-        return np.array([((x-min_v) / (max_v-min_v)) for x in data])*2.0-1
-
-
-    def makesound(self,freqA, freqB, length):
-        modulator_frequency = freqA
-        carrier_frequency = freqB
-        modulation_index = 1.0
-
-        time = np.arange(self._fs*length) / self._fs
-        modulator = np.sin(2.0 * np.pi * modulator_frequency * time) * modulation_index
-        carrier = np.sin(2.0 * np.pi * carrier_frequency * time)
-
-        product = np.zeros_like(modulator)
-
-        for i, t in enumerate(time):
-            product[i] = np.sin(2. * np.pi * (carrier_frequency * t + modulator[i]))
-
-        y = self._norm(product)
-        sd.play(y , self._fs)
-
-
-#super saw
-class SH2020:
-    def __init__(self):
-        self._fs = 44100.0
-
-
-    def cloud_maker(self, freq , n, diff, length, octaver=True):
-        t = np.arange(self._fs*length) / self._fs
-        product = sgl.sawtooth(2 * np.pi * freq * t)
-        
-        for i in range(n):
-            product += sgl.sawtooth(2 * np.pi * (freq-diff) * t)
-            product += sgl.sawtooth(2 * np.pi * (freq+diff) * t)
-            diff += diff
-        if octaver == True:
-            product += sgl.sawtooth(2 * np.pi * freq/2 * t)
-            product += sgl.sawtooth(2 * np.pi * freq/4 * t)*0.5
-
-        min_v = min(product)
-        max_v = max(product)
-        y = np.array([((x-min_v) / (max_v-min_v)) for x in product])*2.0-1
-        sd.play(y , self._fs)
-
-
-
+    def SetSpeed(self, speed):
+        self._speed = cycle(speed)
 
 
 
 
 if __name__ == "__main__":
-    
-    fm6 = FM6()
-    sin = Sine()
-    sh = SH2020()
 
-    #sh.cloud_maker(100, 5, 0.002, 1.0)
-    #sin.setFreq(777).play(0.5)   
-    #fm6.makesound(20, 300, 1)
+    mc = MouseController(print)
+    mc.Start()
+    
+##    sc = SequencerController(print)
+##    sc.SetLoop([234,567,87,355])
+##    sc.Run()
+    
+    
+    

@@ -1,90 +1,45 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal as sgl
-import sounddevice as sd
+import controllers
 
 
-#simple sine wave generator
-class Sine:
-    def __init__(self):
-        self._fs = 44100.0
-        self._freq = 440.0
+#controller interface
+class PluginController:
+    def Activate(self):pass
+
+    def Set(self, data):pass
+
+    def ConnectTo(self, plugin):pass
+
+    def Func01(self, data):pass
+
+    def Func02(self, data):pass
+
+
+
+#concrete PluginControllers
+class MousePluginController(PluginController):
+
+    def ConnectTo(self, plugin):
+        self._plugin = plugin
+        self._controller = controllers.MouseController(self._plugin.Play)
+
+    def Activate(self):
+        self._controller.Start()
+
         
-    def setFreq(self, f):
-        self._freq = f
-        return self
-        
-    def play(self, length):
-        t = np.arange(self._fs*length) / self._fs
-        y = np.sin(2 * np.pi * self._freq * t)
-        sd.play(y , self._fs)
 
 
-
-#fm synth
-class FM6:
-    def __init__(self):
-        self._fs = 44100.0
-
-    def _norm(self,data):
-        min_v = min(data)
-        max_v = max(data)
-        return np.array([((x-min_v) / (max_v-min_v)) for x in data])*2.0-1
-
-
-    def makesound(self,freqA, freqB, length):
-        modulator_frequency = freqA
-        carrier_frequency = freqB
-        modulation_index = 1.0
-
-        time = np.arange(self._fs*length) / self._fs
-        modulator = np.sin(2.0 * np.pi * modulator_frequency * time) * modulation_index
-        carrier = np.sin(2.0 * np.pi * carrier_frequency * time)
-
-        product = np.zeros_like(modulator)
-
-        for i, t in enumerate(time):
-            product[i] = np.sin(2. * np.pi * (carrier_frequency * t + modulator[i]))
-
-        y = self._norm(product)
-        sd.play(y , self._fs)
-
-
-#super saw
-class SH2020:
-    def __init__(self):
-        self._fs = 44100.0
-
-
-    def cloud_maker(self, freq , n, diff, length, octaver=True):
-        t = np.arange(self._fs*length) / self._fs
-        product = sgl.sawtooth(2 * np.pi * freq * t)
-        
-        for i in range(n):
-            product += sgl.sawtooth(2 * np.pi * (freq-diff) * t)
-            product += sgl.sawtooth(2 * np.pi * (freq+diff) * t)
-            diff += diff
-        if octaver == True:
-            product += sgl.sawtooth(2 * np.pi * freq/2 * t)
-            product += sgl.sawtooth(2 * np.pi * freq/4 * t)*0.5
-
-        min_v = min(product)
-        max_v = max(product)
-        y = np.array([((x-min_v) / (max_v-min_v)) for x in product])*2.0-1
-        sd.play(y , self._fs)
-
-
-
-
-
-
-
-if __name__ == "__main__":
+class  SequencerPluginController(PluginController):
     
-    fm6 = FM6()
-    sin = Sine()
-    sh = SH2020()
+    def ConnectTo(self, plugin):
+        self._plugin = plugin
+        self._controller = controllers.SequencerController().DefineFunc(self._plugin.Play)
 
-    #sh.cloud_maker(100, 5, 0.002, 1.0)
-    #sin.setFreq(777).play(0.5)   
-    #fm6.makesound(20, 300, 1)
+    def Activate(self):
+        self._controller.Run()
+
+    def Set(self, data):
+        self._controller.SetLoop(data)
+
+
+
+
