@@ -55,3 +55,15 @@ class SH2020Plugin(Plugin):
     def Mod2(self, val):
          self._oscCount = val
         
+
+
+
+class SamplerPlugin(Plugin):
+    def __init__(self):
+        self._plugin = synths.Sampler()
+
+    
+        
+    def Play(self, pitch, length):
+        self._plugin.play_sample(pitch, length)
+
