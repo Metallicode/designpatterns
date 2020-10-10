@@ -1,0 +1,5 @@
+{
+"sender_email":"",
+"known_files":["config.json","preview.html", "configreader.py","log.db", "mailsloth.py","addressesprovider.py","messageprovider.py", "messagelogger.py", "sendmail.py","emails.txt"],
+"signature":"\n\n\nSent by MailSloth! \nhttp://metallicode.com/"
+}
